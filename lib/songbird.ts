@@ -44,49 +44,45 @@ class Songbird extends Vineyard.Bulb {
 		return this.templates[name].join("")
 	}
 
-	notify(user, name, data, trellis_name:string, store = true):Promise {
+	notify(user_id:number, name:string, data, trellis_name:string, message:string = null):Promise {
+		// Temporary backwards compatibility
 		var ground = this.lawn.ground
-		var message
-
-		if (!store || !trellis_name) {
-			if (!this.lawn.io)
-				return when.resolve()
-
-			return this.push_notification(user.id, data)
-		}
-
 		data.event = name
 		return ground.create_update(trellis_name, data, this.lawn.config.admin).run()
 			.then((notification)=> {
-				console.log('sending-message', name, user.id, data)
+				console.log('sending-message', name, user_id, data)
 
-				var online = this.lawn.user_is_online(user.id)
-
+				var online = this.lawn.user_is_online(user_id)
 				return ground.create_update('notification_target', {
 					notification: notification.id,
-					recipient: user.id,
+					recipient: user_id,
 					received: online
 				}, this.lawn.config.admin).run()
-					.then(()=> this.push_notification(user.id, data))
+					.then(()=> this.push_notification(user_id, data, message))
 			})
 	}
 
-	private push_notification(ids, data) {
-		ids = ids.filter((id)=> typeof id == 'number')
+	notify_without_storing(user_id:number, name:string, data, message:string = null):Promise {
+		if (!this.lawn.io)
+			return when.resolve()
+
+		return this.push_notification(user_id, data, message)
+	}
+
+	private push_notification(user_id:number, data, message:string) {
 		var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users"
 			+ "\nJOIN notification_targets targets"
 			+ "\nON targets.user = users.id AND targets.viewed = 0"
-			+ "\nWHERE id IN (" + ids.join(', ') + " )"
+			+ "\nWHERE id = ?"
 
-		return this.ground.db.query(sql)
-			.then((users)=> users.map((user)=> {
-				this.lawn.io.sockets.in('user/' + user.id).emit(name, data)
-				if (this.lawn.user_is_online(user.id))
+		return this.ground.db.query_single(sql)
+			.then((row)=> {
+				this.lawn.io.sockets.in('user/' + user_id).emit(name, data)
+				if (this.lawn.user_is_online(user_id))
 					return when.resolve()
 
-				var message = this.format_message(name, data)
-				return when.all(this.fallback_bulbs.map((b)=> b.send({id: user.id}, message, data, user.badge)))
-			})
+				return when.all(this.fallback_bulbs.map((b)=> b.send({id: user_id}, message, data, row.badge)))
+			}
 		)
 	}
 

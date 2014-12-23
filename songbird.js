@@ -49,53 +49,45 @@ var Songbird = (function (_super) {
         return this.templates[name].join("");
     };
 
-    Songbird.prototype.notify = function (user, name, data, trellis_name, store) {
+    Songbird.prototype.notify = function (user_id, name, data, trellis_name, message) {
         var _this = this;
-        if (typeof store === "undefined") { store = true; }
+        if (typeof message === "undefined") { message = null; }
         var ground = this.lawn.ground;
-        var message;
-
-        if (!store || !trellis_name) {
-            if (!this.lawn.io)
-                return when.resolve();
-
-            return this.push_notification(user.id, data);
-        }
-
         data.event = name;
         return ground.create_update(trellis_name, data, this.lawn.config.admin).run().then(function (notification) {
-            console.log('sending-message', name, user.id, data);
+            console.log('sending-message', name, user_id, data);
 
-            var online = _this.lawn.user_is_online(user.id);
-
+            var online = _this.lawn.user_is_online(user_id);
             return ground.create_update('notification_target', {
                 notification: notification.id,
-                recipient: user.id,
+                recipient: user_id,
                 received: online
             }, _this.lawn.config.admin).run().then(function () {
-                return _this.push_notification(user.id, data);
+                return _this.push_notification(user_id, data, message);
             });
         });
     };
 
-    Songbird.prototype.push_notification = function (ids, data) {
+    Songbird.prototype.notify_without_storing = function (user_id, name, data, message) {
+        if (typeof message === "undefined") { message = null; }
+        if (!this.lawn.io)
+            return when.resolve();
+
+        return this.push_notification(user_id, data, message);
+    };
+
+    Songbird.prototype.push_notification = function (user_id, data, message) {
         var _this = this;
-        ids = ids.filter(function (id) {
-            return typeof id == 'number';
-        });
-        var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users" + "\nJOIN notification_targets targets" + "\nON targets.user = users.id AND targets.viewed = 0" + "\nWHERE id IN (" + ids.join(', ') + " )";
+        var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users" + "\nJOIN notification_targets targets" + "\nON targets.user = users.id AND targets.viewed = 0" + "\nWHERE id = ?";
 
-        return this.ground.db.query(sql).then(function (users) {
-            return users.map(function (user) {
-                _this.lawn.io.sockets.in('user/' + user.id).emit(name, data);
-                if (_this.lawn.user_is_online(user.id))
-                    return when.resolve();
+        return this.ground.db.query_single(sql).then(function (row) {
+            _this.lawn.io.sockets.in('user/' + user_id).emit(name, data);
+            if (_this.lawn.user_is_online(user_id))
+                return when.resolve();
 
-                var message = _this.format_message(name, data);
-                return when.all(_this.fallback_bulbs.map(function (b) {
-                    return b.send({ id: user.id }, message, data, user.badge);
-                }));
-            });
+            return when.all(_this.fallback_bulbs.map(function (b) {
+                return b.send({ id: user_id }, message, data, row.badge);
+            }));
         });
     };
 

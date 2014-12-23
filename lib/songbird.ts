@@ -1,4 +1,11 @@
-export class Songbird extends Vineyard.Bulb {
+/// <reference path="../../vineyard/vineyard.d.ts"/>
+/// <reference path="../../vineyard-lawn/lawn.d.ts"/>
+
+interface Songbird_Method {
+	send:(user, message:string, data, badge)=> Promise
+}
+
+class Songbird extends Vineyard.Bulb {
 	lawn:Lawn
 	fallback_bulbs:Songbird_Method[] = []
 	templates
@@ -37,51 +44,30 @@ export class Songbird extends Vineyard.Bulb {
 		return this.templates[name].join("")
 	}
 
-	notify(users, name, data, trellis_name:string, store = true):Promise {
+	notify(user, name, data, trellis_name:string, store = true):Promise {
 		var ground = this.lawn.ground
-		var ids = users.map((x)=> typeof x == 'object' ? x.id : x)
 		var message
 
 		if (!store || !trellis_name) {
 			if (!this.lawn.io)
 				return when.resolve()
 
-			return this.push_notification(ids, data)
-
-			//var sql = ""
-			//return this.ground.db.query()
-			//var promises = []
-			//for (var i = 0; i < ids.length; ++i) {
-			//	var id = ids[i]
-			//	console.log('sending-message', name, id, data)
-			//	var online = this.lawn.user_is_online(id)
-			//	console.log('online', online)
-			//	this.lawn.io.sockets.in('user/' + id).emit(name, data)
-			//	if (!online) {
-			//		message = this.format_message(name, data)
-			//		for (var x = 0; x < this.fallback_bulbs.length; ++x) {
-			//			promises.push(this.fallback_bulbs[x].send({id: id}, message, data, 0))
-			//		}
-			//	}
-			//}
-			//return when.all(promises)
+			return this.push_notification(user.id, data)
 		}
 
 		data.event = name
 		return ground.create_update(trellis_name, data, this.lawn.config.admin).run()
 			.then((notification)=> {
-				return when.all(ids.map((id)=> {
-					console.log('sending-message', name, id, data)
+				console.log('sending-message', name, user.id, data)
 
-					var online = this.lawn.user_is_online(id)
+				var online = this.lawn.user_is_online(user.id)
 
-					return ground.create_update('notification_target', {
-						notification: notification.id,
-						recipient: id,
-						received: online
-					}, this.lawn.config.admin).run()
-				}))
-					.then(()=> this.push_notification(ids, data))
+				return ground.create_update('notification_target', {
+					notification: notification.id,
+					recipient: user.id,
+					received: online
+				}, this.lawn.config.admin).run()
+					.then(()=> this.push_notification(user.id, data))
 			})
 	}
 
@@ -141,3 +127,5 @@ export class Songbird extends Vineyard.Bulb {
 			})
 	}
 }
+
+module.exports = Songbird

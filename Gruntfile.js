@@ -7,7 +7,7 @@ module.exports = function (grunt) {
 		ts: {
 			test: {                                 // a particular target
 				src: ["lib/songbird.ts"],        // The source typescript files, http://gruntjs.com/configuring-tasks#files
-				out: "songbird.js",
+				outDir: "./",
 				options: {                    // use to override the default options, http://gruntjs.com/configuring-tasks#options
 					target: 'es5',         // 'es3' (default) | 'es5'
 					module: 'commonjs',       // 'amd' (default) | 'commonjs'

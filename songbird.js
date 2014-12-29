@@ -5,6 +5,8 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 
+var Vineyard = require('vineyard');
+
 var Songbird = (function (_super) {
     __extends(Songbird, _super);
     function Songbird() {
@@ -58,6 +60,11 @@ var Songbird = (function (_super) {
             console.log('sending-message', name, user_id, data);
 
             var online = _this.lawn.user_is_online(user_id);
+            console.log('notify', {
+                notification: notification.id,
+                recipient: user_id,
+                received: online
+            });
             return ground.create_update('notification_target', {
                 notification: notification.id,
                 recipient: user_id,
@@ -78,10 +85,12 @@ var Songbird = (function (_super) {
 
     Songbird.prototype.push_notification = function (user_id, data, message) {
         var _this = this;
-        var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users" + "\nJOIN notification_targets targets" + "\nON targets.user = users.id AND targets.viewed = 0" + "\nWHERE id = ?";
+        var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users" + "\nJOIN notification_targets targets" + "\nON targets.recipient = users.id AND targets.viewed = 0" + "\nWHERE users.id = ?";
 
-        return this.ground.db.query_single(sql).then(function (row) {
-            _this.lawn.io.sockets.in('user/' + user_id).emit(name, data);
+        data.push_message = message;
+
+        return this.ground.db.query_single(sql, [user_id]).then(function (row) {
+            _this.lawn.io.sockets.in('user/' + user_id).emit(data.event, data);
             if (_this.lawn.user_is_online(user_id))
                 return when.resolve();
 

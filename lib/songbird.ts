@@ -5,6 +5,8 @@ interface Songbird_Method {
 	send:(user, message:string, data, badge)=> Promise
 }
 
+import Vineyard = require('vineyard')
+
 class Songbird extends Vineyard.Bulb {
 	lawn:Lawn
 	fallback_bulbs:Songbird_Method[] = []
@@ -53,6 +55,11 @@ class Songbird extends Vineyard.Bulb {
 				console.log('sending-message', name, user_id, data)
 
 				var online = this.lawn.user_is_online(user_id)
+				console.log('notify', {
+					notification: notification.id,
+					recipient: user_id,
+					received: online
+				})
 				return ground.create_update('notification_target', {
 					notification: notification.id,
 					recipient: user_id,
@@ -72,12 +79,14 @@ class Songbird extends Vineyard.Bulb {
 	private push_notification(user_id:number, data, message:string) {
 		var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users"
 			+ "\nJOIN notification_targets targets"
-			+ "\nON targets.user = users.id AND targets.viewed = 0"
-			+ "\nWHERE id = ?"
+			+ "\nON targets.recipient = users.id AND targets.viewed = 0"
+			+ "\nWHERE users.id = ?"
 
-		return this.ground.db.query_single(sql)
+		data.push_message = message
+
+		return this.ground.db.query_single(sql, [user_id])
 			.then((row)=> {
-				this.lawn.io.sockets.in('user/' + user_id).emit(name, data)
+				this.lawn.io.sockets.in('user/' + user_id).emit(data.event, data)
 				if (this.lawn.user_is_online(user_id))
 					return when.resolve()
 

@@ -1,0 +1,59 @@
+{
+  "trellises": {
+    "notification": {
+      "primary_key": "id",
+      "properties": {
+        "id": {
+          "type": "int"
+        },
+        "type": {
+          "type": "string",
+          "readonly": true,
+          "insert": "trellis"
+        },
+        "created": {
+          "type": "created",
+          "readonly": true
+        },
+        "event": {
+          "type": "string"
+        },
+        "targets": {
+          "type": "list",
+          "trellis": "notification_target"
+        },
+        "recipient": {
+          "type": "reference",
+          "trellis": "user"
+        },
+        "viewed": {
+          "type": "datetime"
+        }
+      }
+    },
+    "notification_target": {
+      "primary_key": "id",
+      "properties": {
+        "id": {
+          "type": "int"
+        },
+        "notification": {
+          "type": "reference",
+          "trellis": "notification",
+          "is_parent": true
+        },
+        "recipient": {
+          "type": "reference",
+          "trellis": "user"
+        },
+        "received": {
+          "type": "bool",
+          "default": false
+        },
+        "viewed": {
+          "type": "datetime"
+        }
+      }
+    }
+  }
+}

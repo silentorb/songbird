@@ -13,6 +13,10 @@ var Songbird = (function (_super) {
         _super.apply(this, arguments);
         this.fallback_bulbs = [];
     }
+    Songbird.prototype.till_ground = function (ground_config) {
+        this.vineyard.add_schema("node_modules/vineyard-songbird/songbird.json");
+    };
+
     Songbird.prototype.grow = function () {
         var _this = this;
         this.lawn = this.vineyard.bulbs.lawn;
@@ -56,6 +60,7 @@ var Songbird = (function (_super) {
         if (typeof message === "undefined") { message = null; }
         var ground = this.lawn.ground;
         data.event = name;
+        data.recipient = user_id;
         return ground.create_update(trellis_name, data, this.lawn.config.admin).run().then(function (notification) {
             console.log('sending-message', name, user_id, data);
 

@@ -6,8 +6,7 @@ module.exports = function (grunt) {
 	grunt.initConfig({
 		ts: {
 			test: {                                 // a particular target
-				src: ["lib/songbird.ts"],        // The source typescript files, http://gruntjs.com/configuring-tasks#files
-				outDir: "./",
+				src: ["songbird.ts"],        // The source typescript files, http://gruntjs.com/configuring-tasks#files
 				options: {                    // use to override the default options, http://gruntjs.com/configuring-tasks#options
 					target: 'es5',         // 'es3' (default) | 'es5'
 					module: 'commonjs',       // 'amd' (default) | 'commonjs'
@@ -17,7 +16,7 @@ module.exports = function (grunt) {
 			}
 		},
 		watch: {
-			files: ["lib/songbird.ts"],
+			files: ["songbird.ts"],
 			tasks: ['ts']
 		}
 	})

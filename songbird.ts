@@ -1,5 +1,5 @@
-/// <reference path="../../vineyard/vineyard.d.ts"/>
-/// <reference path="../../vineyard-lawn/lawn.d.ts"/>
+/// <reference path="../vineyard/vineyard.d.ts"/>
+/// <reference path="../vineyard-lawn/lawn.d.ts"/>
 
 interface Songbird_Method {
 	send:(user, message:string, data, badge)=> Promise
@@ -11,6 +11,10 @@ class Songbird extends Vineyard.Bulb {
 	lawn:Lawn
 	fallback_bulbs:Songbird_Method[] = []
 	templates
+
+	till_ground(ground_config:Vineyard.Ground_Configuration) {
+		this.vineyard.add_schema("node_modules/vineyard-songbird/songbird.json")
+	}
 
 	grow() {
 		this.lawn = this.vineyard.bulbs.lawn
@@ -50,6 +54,7 @@ class Songbird extends Vineyard.Bulb {
 		// Temporary backwards compatibility
 		var ground = this.lawn.ground
 		data.event = name
+		data.recipient = user_id
 		return ground.create_update(trellis_name, data, this.lawn.config.admin).run()
 			.then((notification)=> {
 				console.log('sending-message', name, user_id, data)

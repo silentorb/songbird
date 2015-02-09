@@ -1,7 +1,6 @@
 {
   "trellises": {
     "notification": {
-      "primary_key": "id",
       "properties": {
         "id": {
           "type": "int"
@@ -32,7 +31,6 @@
       }
     },
     "notification_target": {
-      "primary_key": "id",
       "properties": {
         "id": {
           "type": "int"

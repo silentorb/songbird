@@ -90,7 +90,7 @@ var Songbird = (function (_super) {
 
     Songbird.prototype.push_notification = function (user_id, data, message) {
         var _this = this;
-        var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users" + "\nJOIN notification_targets targets" + "\nON targets.recipient = users.id AND targets.viewed = 0" + "\nWHERE users.id = ?";
+        var sql = "COUNT(targets.id) AS badge FROM notifications" + "\nWHERE recipient = users.id AND viewed = 0";
 
         data.push_message = message;
 

@@ -82,10 +82,8 @@ class Songbird extends Vineyard.Bulb {
 	}
 
 	private push_notification(user_id:number, data, message:string) {
-		var sql = "SELECT users.id, COUNT(targets.id) AS badge FROM users"
-			+ "\nJOIN notification_targets targets"
-			+ "\nON targets.recipient = users.id AND targets.viewed = 0"
-			+ "\nWHERE users.id = ?"
+		var sql = "COUNT(targets.id) AS badge FROM notifications"
+			+ "\nWHERE recipient = users.id AND viewed = 0"
 
 		data.push_message = message
 

@@ -1,6 +1,6 @@
 {
   "name": "vineyard-songbird",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "General notification library for Vineyard",
   "main": "songbird.js",
   "repository": {

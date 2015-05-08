@@ -82,8 +82,8 @@ class Songbird extends Vineyard.Bulb {
 	}
 
 	private push_notification(user_id:number, data, message:string) {
-		var sql = "COUNT(targets.id) AS badge FROM notifications"
-			+ "\nWHERE recipient = users.id AND viewed = 0"
+		var sql = "SELECT COUNT(*) AS badge FROM notifications"
+			+ "\nWHERE recipient = ? AND viewed = 0"
 
 		data.push_message = message
 
@@ -103,7 +103,7 @@ class Songbird extends Vineyard.Bulb {
 		var query = ground.create_query('notification_target')
 		query.add_filter('recipient', user)
 		query.add_filter('notification', request.notification)
-		return query.run_single(user)
+		return query.run_single(user, this.ground.miner)
 			.then((object)=> {
 				if (!object)
 					throw new HttpError('Could not find a notification with that id and target user.', 400)
@@ -126,7 +126,7 @@ class Songbird extends Vineyard.Bulb {
 		var query = ground.create_query('notification_target')
 		query.add_filter('recipient', user)
 		query.add_filter('received', false)
-		query.run(user)
+		query.run(user, this.ground.miner)
 			.done((objects)=> {
 				for (var i = 0; i < objects.length; ++i) {
 					var notification = objects[i].notification

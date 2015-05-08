@@ -90,7 +90,7 @@ var Songbird = (function (_super) {
 
     Songbird.prototype.push_notification = function (user_id, data, message) {
         var _this = this;
-        var sql = "COUNT(targets.id) AS badge FROM notifications" + "\nWHERE recipient = users.id AND viewed = 0";
+        var sql = "SELECT COUNT(*) AS badge FROM notifications" + "\nWHERE recipient = ? AND viewed = 0";
 
         data.push_message = message;
 
@@ -110,7 +110,7 @@ var Songbird = (function (_super) {
         var query = ground.create_query('notification_target');
         query.add_filter('recipient', user);
         query.add_filter('notification', request.notification);
-        return query.run_single(user).then(function (object) {
+        return query.run_single(user, this.ground.miner).then(function (object) {
             if (!object)
                 throw new HttpError('Could not find a notification with that id and target user.', 400);
 
@@ -132,7 +132,7 @@ var Songbird = (function (_super) {
         var query = ground.create_query('notification_target');
         query.add_filter('recipient', user);
         query.add_filter('received', false);
-        query.run(user).done(function (objects) {
+        query.run(user, this.ground.miner).done(function (objects) {
             for (var i = 0; i < objects.length; ++i) {
                 var notification = objects[i].notification;
                 _this.lawn.io.sockets.in('user/' + user.id).emit(notification.event, notification.data);
